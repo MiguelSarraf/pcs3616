@@ -366,8 +366,7 @@ class TuringMachine(object):
                                    ' dictionary'.format(q))
             # check if the transition table has an entry for the current symbol
             if s not in self.transition[q]:
-                raise UnknownSymbol('"{}" not in transition'
-                                    ' dictionary'.format(s))
+                return False
             # compute the new configuration from the transition function
             new_state, new_symbol, direction = self.transition[q][s]
             # assert that the symbol to write is a string of length one

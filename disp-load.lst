@@ -1,0 +1,5 @@
+0 0 
+1 0 
+3 0 mbs-corretor/batch-load.txt l
+3 1 mbs-corretor/dump.data l
+3 255 mbs-corretor/log.txt e

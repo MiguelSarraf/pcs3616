@@ -44,7 +44,7 @@ TWO             K       /0010
 ; Corpo da subrotina
 UNPACK          $       /0001
                 MM      WORD        ; Carrega word. Primeiramente faremos unpack de B2
-                *       SHIFT       ; Desloca os bytes para remover 2 primeiros hex
+                ML      SHIFT       ; Desloca os bytes para remover 2 primeiros hex
                 SC      RSHIFT2     ; Desloca os bytes menos significativos pro seu lugar
                 MM      UNP_B2      ; Salva resultado
                 LD      WORD        ;
@@ -63,11 +63,11 @@ REFIX           K       /0080
 ; Corpo da subrotina
 RSHIFT2         $       /0001
                 JN      NEG         ; O número é negativo
-                /       SHIFT       ; Retorna os 2 bytes à posição inicial
+                DV      SHIFT       ; Retorna os 2 bytes à posição inicial
                 JP      FIM-RS      ; Vai para final de RSHIFT2
-NEG             -       FIX         ; Fix do shift em número negativo
-                /       SHIFT       ; Shift
-                +       REFIX       ; Fix para voltar número tirado
+NEG             SB      FIX         ; Fix do shift em número negativo
+                DV      SHIFT       ; Shift
+                AD      REFIX       ; Fix para voltar número tirado
 FIM-RS          RS      RSHIFT2     ; Retorno
 
 ; -------------------------------------------------------------------
@@ -80,24 +80,24 @@ S_HEX           $       /0001
 IS_HEX          $       /0001
                 MM      S_HEX
   ;; Verifica se < '0'
-                -       CH_0
+                SB      CH_0
                 JN      NOT_HEX
   ;; Verifica se > 'f'
                 LD      S_HEX
-                -       CH_F
-                -       ONE ; we wanna include 'f'
+                SB      CH_F
+                SB      ONE ; we wanna include 'f'
                 JN      MIGHTB
   ;; Não é hex. Retorna -1.
 NOT_HEX         LD      MINUS_1
                 RS      IS_HEX
   ;; Incrementa CH_F decrementado e verifica se é caractere especial.
 MIGHTB          LD      S_HEX
-                -       X_INI
+                SB      X_INI
                 JN      YES_HEX
-                -       X_DIFF
+                SB      X_DIFF
                 JN      NOT_HEX
                 LD      S_HEX
-                -       X_DIFF
+                SB      X_DIFF
                 RS      IS_HEX
 YES_HEX         LD      S_HEX
                 RS      IS_HEX
@@ -128,16 +128,16 @@ CHTOI           $       /0001
                 LD      UNP_B1
                 SC      IS_HEX
                 JN      CH_RET
-                -       CH_0
-                *       EIGHT
+                SB      CH_0
+                ML      EIGHT
                 MM      CH_ANS
   ;; Processa segundo byte
                 LD      UNP_B2
                 SC      IS_HEX
                 JN      CH_RET
-                -       CH_0
-                *       FOUR
-                +       CH_ANS
+                SB      CH_0
+                ML      FOUR
+                AD      CH_ANS
                 MM      CH_ANS
   ;; Unpack segunda palavra
                 LD      CH_IN_B
@@ -148,16 +148,16 @@ CHTOI           $       /0001
                 LD      UNP_B1
                 SC      IS_HEX
                 JN      CH_RET
-                -       CH_0
-                *       TWO
-                +       CH_ANS
+                SB      CH_0
+                ML      TWO
+                AD      CH_ANS
                 MM      CH_ANS
   ;; Processa segundo byte
                 LD      UNP_B2
                 SC      IS_HEX
                 JN      CH_RET
-                -       CH_0
-                +       CH_ANS
+                SB      CH_0
+                AD      CH_ANS
   ;; Valor da resposta está no acumulador!
 CH_RET          RS      CHTOI
 

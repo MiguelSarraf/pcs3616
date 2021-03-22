@@ -4,8 +4,8 @@
 
 ; Símbolos exportados
 ; -------------------------------------------------------------------
-LOADER      >
-LOADER_UL   >
+>           LOADER   
+>           LOADER_UL
 
 ; Origem relocável
                 &       /0000
@@ -34,7 +34,7 @@ LOADER_UL    $          /0001
 LOADER       $          /0001
 
              LD         GD_OP
-             +          LOADER_UL
+             AD         LOADER_UL
              MM         DO_GD_1
              MM         DO_GD_2
              MM         DO_GD_3
@@ -48,55 +48,55 @@ DO_GD_1      $          /0001
              MM         END_INICIAL
 DO_GD_2      $          /0001
              MM         TAM
-             *          DOIS
+             ML         DOIS
              MM         DOIS_TAM
 
 ; Cálculo de erro
              LD         END_LIMITE
-             -          END_INICIAL
-             +          UM
-             -          DOIS_TAM
+             SB         END_INICIAL
+             AD         UM
+             SB         DOIS_TAM
              JN         SAI_ERROR_TAM
 
 ; Cabe na memória, então: loop
                 LV      /0000
                 MM      COUNT
 LOOP            LD      COUNT
-                -       DOIS_TAM
+                SB      DOIS_TAM
                 JZ      SAI_NORMAL
                 LV      /0000
                 MM      CHECKSUM
 DO_GD_3         $       /0001                 ; Endereço inicial
                 MM      END_INICIAL
-                +       CHECKSUM
+                AD      CHECKSUM
                 MM      CHECKSUM
 DO_GD_4         $       /0001                 ; Tamanho do bloco
                 MM      COUNT2
                 MM      COUNT3
-                +       CHECKSUM
+                AD      CHECKSUM
                 MM      CHECKSUM
                 LD      COUNT2
-                *       DOIS
-                +       COUNT
+                ML      DOIS
+                AD      COUNT
                 MM      COUNT
 LOOP2           LD      COUNT2
                 JZ      FIM2
                 LD      COUNT3                ; Calcula endereço de leitura
-                -       COUNT2
-                *       DOIS
-                +       END_INICIAL
-                +       SAVE_OP
+                SB      COUNT2
+                ML      DOIS
+                AD      END_INICIAL
+                AD      SAVE_OP
                 MM      SAVE_DATA
 DO_GD_5         $       /0001
 SAVE_DATA       $       /0001
-                +       CHECKSUM
+                AD      CHECKSUM
                 MM      CHECKSUM
                 LD      COUNT2
-                -       UM
+                SB      UM
                 MM      COUNT2
                 JP      LOOP2
 FIM2            $       /0001                 ; Verifica checksum
-                -       CHECKSUM
+                SB      CHECKSUM
                 JZ      SUM_OK
                 JP      WRONGSUM
 SUM_OK          JP      LOOP

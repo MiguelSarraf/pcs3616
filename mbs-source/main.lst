@@ -1,0 +1,181 @@
+;; ------------------------------------------------------------------- 
+;; Programa principal do Monitor Batch Simples (MBS) 
+;; ------------------------------------------------------------------- 
+
+;; Coloque aqui os símbolos importados 
+;; ------------------------------------------------------------------- 
+
+;; ... 
+
+;; Origem relocável 
+;& /0000 
+
+a000 00be ; MAIN JP INI ; salta para o início do programa 
+8002 0000 ; UL K /0000 ; parâmetro: UL onde está o arquivo de batch 
+
+;; ------------------------------------------------------------------- 
+;; Subrotina: UNPACK 
+;; Extrai os bytes de uma word contida no acumulador, colocando-os 
+;; em dois endereços da memória. 
+;; 
+;; Exemplo: dada a word XYZT no acumulador, ao final da execução, 
+;; UNP_B1="00XY" e UNP_B2="00ZT". 
+;; ------------------------------------------------------------------- 
+
+;; Parâmetros 
+8004 0000 ; WORD $ /0001 ; Word de entrada 
+8006 0000 ; UNP_B1 $ /0001 ; Byte mais significativo 
+8008 0000 ; UNP_B2 $ /0001 ; Byte menos significativo 
+
+;; Constantes 
+800a 0100 ; SHIFT K /0100 
+800c 0030 ; CH_0 K /0030 
+800e 0046 ; CH_F K /0046 
+8010 003a ; X_INI K /003A 
+8012 0041 ; X_END K /0041 
+8014 0007 ; X_DIFF K /0007 
+8016 0001 ; ONE K /0001 
+8018 ffff ; MINUS_1 K /FFFF 
+801a 0000 ; ZERO K /0000 
+801c 1000 ; EIGHT K /1000 
+801e 0100 ; FOUR K /0100 
+8020 0010 ; TWO K /0010 
+
+;; Corpo da subrotina 
+8022 0000 ; UNPACK $ /0001 
+a024 9004 ; MM WORD ; Carrega word. Primeiramente faremos unpack de B2 
+a026 600a ; ML SHIFT ; Desloca os bytes para remover 2 primeiros hex 
+a028 a038 ; SC RSHIFT2 ; Desloca os bytes menos significativos pro seu lugar 
+a02a 9008 ; MM UNP_B2 ; Salva resultado 
+a02c 8004 ; LD WORD ; 
+a02e a038 ; SC RSHIFT2 ; 
+a030 9006 ; MM UNP_B1 ; 
+a032 b022 ; RS UNPACK ; Retorna 
+
+;; ------------------------------------------------------------------- 
+;; Subrotina: RSHIFT2 
+;; Faz um right shift (<) duas vezes do valor do acumulador 
+;; ------------------------------------------------------------------- 
+
+;; Constantes 
+8034 8000 ; FIX K /8000 
+8036 0080 ; REFIX K /0080 
+;; Corpo da subrotina 
+8038 0000 ; RSHIFT2 $ /0001 
+a03a 2040 ; JN NEG ; O número é negativo 
+a03c 700a ; DV SHIFT ; Retorna os 2 bytes à posição inicial 
+a03e 0046 ; JP FIM-RS ; Vai para final de RSHIFT2 
+a040 5034 ; NEG SB FIX ; Fix do shift em número negativo 
+a042 700a ; DV SHIFT ; Shift 
+a044 4036 ; AD REFIX ; Fix para voltar número tirado 
+a046 b038 ; FIM-RS RS RSHIFT2 ; Retorno 
+
+;; ------------------------------------------------------------------- 
+;; Subrotina: IS_HEX 
+;; ------------------------------------------------------------------- 
+
+;;; Parâmetros 
+8048 0000 ; S_HEX $ /0001 
+;;; Corpo da subrotina 
+804a 0000 ; IS_HEX $ /0001 
+a04c 9048 ; MM S_HEX 
+;;; Verifica se < '0' 
+a04e 500c ; SB CH_0 
+a050 205a ; JN NOT_HEX 
+;;; Verifica se > 'f' 
+a052 8048 ; LD S_HEX 
+a054 500e ; SB CH_F 
+a056 5016 ; SB ONE ; we wanna include 'f' 
+a058 205e ; JN MIGHTB 
+;;; Não é hex. Retorna -1. 
+a05a 8018 ; NOT_HEX LD MINUS_1 
+a05c b04a ; RS IS_HEX 
+;;; Incrementa CH_F decrementado e verifica se é caractere especial. 
+a05e 8048 ; MIGHTB LD S_HEX 
+a060 5010 ; SB X_INI 
+a062 206e ; JN YES_HEX 
+a064 5014 ; SB X_DIFF 
+a066 205a ; JN NOT_HEX 
+a068 8048 ; LD S_HEX 
+a06a 5014 ; SB X_DIFF 
+a06c b04a ; RS IS_HEX 
+a06e 8048 ; YES_HEX LD S_HEX 
+a070 b04a ; RS IS_HEX 
+
+;; ------------------------------------------------------------------- 
+;; Subrotina: CHTOI 
+;; Converte uma word em hexa para um número inteiro. 
+;; 
+;; Exemplo: CHTOI("0010") = 0010 (i.e., 16 em decimal) 
+;; ------------------------------------------------------------------- 
+
+;;; Parâmetros 
+8072 0000 ; CH_ANS $ /0001 ; Variável para guardar resultado 
+8074 0000 ; CH_IN_A $ /0001 ; 2 bytes mais significativos (em ASCII) 
+8076 0000 ; CH_IN_B $ /0001 ; 2 bytes menos signicativos (em ASCII) 
+
+;;; Corpo da subrotina 
+8078 0000 ; CHTOI $ /0001 
+;;; Zera CH_ANS 
+a07a 801a ; LD ZERO 
+a07c 9072 ; MM CH_ANS 
+;;; Unpack primeira palavra 
+a07e 8074 ; LD CH_IN_A 
+a080 9004 ; MM WORD 
+a082 a022 ; SC UNPACK 
+;;; Processa primeira palavra 
+;;; Processa primeiro byte 
+a084 8006 ; LD UNP_B1 
+a086 a04a ; SC IS_HEX 
+a088 20bc ; JN CH_RET 
+a08a 500c ; SB CH_0 
+a08c 601c ; ML EIGHT 
+a08e 9072 ; MM CH_ANS 
+;;; Processa segundo byte 
+a090 8008 ; LD UNP_B2 
+a092 a04a ; SC IS_HEX 
+a094 20bc ; JN CH_RET 
+a096 500c ; SB CH_0 
+a098 601e ; ML FOUR 
+a09a 4072 ; AD CH_ANS 
+a09c 9072 ; MM CH_ANS 
+;;; Unpack segunda palavra 
+a09e 8076 ; LD CH_IN_B 
+a0a0 9004 ; MM WORD 
+a0a2 a022 ; SC UNPACK 
+;;; Processa segunda palavra 
+;;; Processa primeiro byte 
+a0a4 8006 ; LD UNP_B1 
+a0a6 a04a ; SC IS_HEX 
+a0a8 20bc ; JN CH_RET 
+a0aa 500c ; SB CH_0 
+a0ac 6020 ; ML TWO 
+a0ae 4072 ; AD CH_ANS 
+a0b0 9072 ; MM CH_ANS 
+;;; Processa segundo byte 
+a0b2 8008 ; LD UNP_B2 
+a0b4 a04a ; SC IS_HEX 
+a0b6 20bc ; JN CH_RET 
+a0b8 500c ; SB CH_0 
+a0ba 4072 ; AD CH_ANS 
+;;; Valor da resposta está no acumulador! 
+a0bc b078 ; CH_RET RS CHTOI 
+
+
+
+a0be 00c0 ; INI JP FIM 
+
+;; ================================================================== 
+;; | 
+;; AQUI | 
+;; VAI | 
+;; O | 
+;; SEU | 
+;; MBS! | 
+;; | 
+;; \o/ | 
+;; | 
+;; ================================================================== 
+
+a0c0 c0c0 ; FIM HM FIM ; Fim do programa 
+

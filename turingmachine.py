@@ -228,11 +228,14 @@ def test(io_file):
                 print("test "+str(n)+": "+"\033[92m {}\033[00m" .format("Correct"))
             else:
                 print("test "+str(n)+": "+"\033[91m {}\033[00m" .format("Wrong"))
+        elif test[1]=="STOP_FAIL":
+            cont+=1
+            print("test "+str(n)+": "+"\033[92m {}\033[00m" .format("Correct"))
         else:
             print("test "+str(n)+": "+"\033[91m {}\033[00m" .format("Wrong"))
         n+=1
     logs[0]=True
-    print(round(cont/len(tests), 2))
+    print(f"Nota final: {round(10*cont/len(tests), 2)}")
 
 class TuringMachine(object):
     """An implementation of the Turing machine model.
